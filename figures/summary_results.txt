@@ -1,0 +1,18 @@
+LOCAL       cascade         cost=15.489167 retention=0.000000%
+LOCAL       greedy          cost=14.023952 retention=1.873732%
+LOCAL       downstream_k1   cost=14.023952 retention=1.873732%
+LOCAL       downstream_k3   cost=14.023952 retention=1.873732%
+SHARED      cascade         cost=108.963333 retention=0.000000%
+SHARED      greedy          cost=80.420342 retention=27.268463%
+SHARED      downstream_k1   cost=80.356747 retention=28.064732%
+SHARED      downstream_k3   cost=80.345819 retention=28.175843%
+ADVERSARIAL cascade         cost=198.191667 retention=0.000000%
+ADVERSARIAL greedy          cost=126.055775 retention=19.689115%
+ADVERSARIAL downstream_k1   cost=65.589792 retention=61.983242%
+ADVERSARIAL downstream_k3   cost=65.589792 retention=61.983242%
+
+Depth-3 retention check (paper definition excludes S):
+greedy         : 10.632443%
+downstream_k1  : 28.074765%
+downstream_k2  : 50.785368%
+downstream_k3  : 68.811013%

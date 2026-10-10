@@ -8,7 +8,7 @@ Expected inputs in --input-dir (default: results/):
   results_lambda.csv
   results_scalability.csv
   results_families.csv
-  results_exact.csv            (optional, RQ1)
+  results_ilp_scalability.csv  (optional, adds the exact solver to Fig. 4)
 
 Outputs in --output-dir (default: figures/):
   fig_trap_depth_cost.pdf/.png
@@ -71,7 +71,7 @@ def make_trap_depth_figure(rows, outdir):
     markers = ["o", "s", "^", "D"]
     depths = [1, 2, 3]
 
-    plt.figure(figsize=(6.5, 4.2))
+    plt.figure(figsize=(3.4, 2.0))
     for alg, label, ls, mk in zip(algs, labels, linestyles, markers):
         ys = [mean(selected(rows, algorithm=alg, trap_depth=d), "cost")
               for d in depths]
@@ -80,7 +80,8 @@ def make_trap_depth_figure(rows, outdir):
     plt.ylabel("Mean repair cost")
     plt.xticks(depths)
     plt.grid(True, axis="y", alpha=0.25)
-    plt.legend(frameon=False)
+    plt.legend(frameon=False, fontsize=7.5, ncol=4, loc="lower center",
+               bbox_to_anchor=(0.5, 1.0), columnspacing=1.0, handlelength=2.0)
     plt.tight_layout()
     plt.savefig(outdir / "fig_trap_depth_cost.pdf", bbox_inches="tight")
     plt.savefig(outdir / "fig_trap_depth_cost.png", dpi=300, bbox_inches="tight")
@@ -95,7 +96,7 @@ def make_lambda_figure(rows, outdir):
 
     # Categorical x-axis: lambda values are not evenly spaced.
     xs = list(range(len(lambdas)))
-    plt.figure(figsize=(3.4, 2.2))
+    plt.figure(figsize=(3.4, 2.0))
     greedy = mean(selected(rows, algorithm="greedy"), "cost")
     plt.axhline(greedy, linestyle=(0, (4, 2)), color=COLORS["greedy"],
                 linewidth=1.0, label="Greedy", zorder=1)
@@ -124,7 +125,7 @@ def make_lambda_figure(rows, outdir):
     plt.close()
 
 
-def make_scalability_figure(rows, outdir):
+def make_scalability_figure(rows, outdir, ilp_rows=None):
     agg = defaultdict(list)
     for r in rows:
         if r["algorithm"] not in ("greedy", "downstream_k1"):
@@ -133,7 +134,7 @@ def make_scalability_figure(rows, outdir):
         agg[(r["algorithm"], x)].append(float(r["runtime_s"]))
 
     xs = sorted({x for (_, x) in agg})
-    plt.figure(figsize=(6.5, 4.2))
+    plt.figure(figsize=(3.4, 2.0))
     for alg, label, ls, mk in [
         ("greedy", "Greedy", "-", "o"),
         ("downstream_k1", "1-step", "--", "s"),
@@ -146,12 +147,19 @@ def make_scalability_figure(rows, outdir):
                 yvals.append(statistics.mean(vals))
         plt.plot(xvals, yvals, label=label, linestyle=ls, marker=mk, color=COLORS[alg])
 
+    if ilp_rows:
+        ilp = defaultdict(list)
+        for r in ilp_rows:
+            ilp[int(float(r["affected"]))].append(float(r["ilp_time"]))
+        ix = sorted(ilp)
+        plt.plot(ix, [statistics.mean(ilp[x]) for x in ix], label="Exact (CP-SAT)",
+                 linestyle=":", marker="D", color="#2ca02c")
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("Affected-region size")
     plt.ylabel("Mean runtime (s)")
-    plt.grid(True, which="both", alpha=0.20)
-    plt.legend(frameon=False)
+    plt.grid(True, which="major", alpha=0.20)
+    plt.legend(frameon=False, fontsize=7.5)
     plt.tight_layout()
     plt.savefig(outdir / "fig_scalability_affected_region.pdf", bbox_inches="tight")
     plt.savefig(outdir / "fig_scalability_affected_region.png", dpi=300, bbox_inches="tight")
@@ -214,7 +222,9 @@ def main():
 
     make_trap_depth_figure(depth, outdir)
     make_lambda_figure(lamb, outdir)
-    make_scalability_figure(scal, outdir)
+    ilp_scal_path = indir / "results_ilp_scalability.csv"
+    ilp_scal = read_csv(ilp_scal_path) if ilp_scal_path.exists() else None
+    make_scalability_figure(scal, outdir, ilp_scal)
     summary = make_family_table(fam, outdir)
 
     # Depth-3 retention check used in abstract/RQ2/conclusion.

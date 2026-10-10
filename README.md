@@ -5,13 +5,14 @@ This repository contains the code and experimental results accompanying the anon
 **Forgetting in the Dataflow: Modeling and Propagating Deletion in Multi-Party Provenance Graphs**
 
 The artifact implements the Collaborative Forgetting Graph (CFG), CascadeDelete,
-GreedyRepair, k-step Downstream-Aware Repair (DA-k), and the exact branch-and-bound
-solver used for small instances.
+GreedyRepair, k-step Downstream-Aware Repair (DA-k), and the exact
+integer-programming formulation of MCCF solved with OR-Tools CP-SAT.
 
 ## Requirements
 
 - Python 3.10+
 - matplotlib 3.7+
+- ortools 9.x (exact CP-SAT solver)
 
 Install dependencies with:
 
@@ -23,6 +24,10 @@ python -m pip install -r requirements.txt
 
 - `src/collaborative_forgetting_experiments.py`:
   CFG generator and repair algorithms.
+- `scripts/mccf_ilp.py`:
+  exact integer-programming formulation of MCCF (OR-Tools CP-SAT).
+- `scripts/run_ilp.py`, `scripts/run_ilp_scalability.py`, `scripts/run_ablation.py`:
+  exact-optimum, exact-solver scalability, and action-ablation campaigns.
 - `scripts/generate_paper_outputs.py`:
   generates figures and aggregate tables from experiment CSVs.
 - `results/`:
@@ -50,23 +55,28 @@ and denominator.
 
 ## Reproducing the experiments
 
-### Comparison with the exact optimum (RQ1)
+### Gap to the proven optimum (RQ1)
+
+Solves the 180 adversarial instances of RQ2 exactly and runs all heuristics:
 
 ```bash
-python src/collaborative_forgetting_experiments.py \
-  --n 15,20 \
-  --actors 3,5 \
-  --families ADVERSARIAL \
-  --seeds 1,2,3,4,5,6,7,8,9,10 \
-  --trap-depths 1 \
-  --lookahead-depths 1 \
-  --lambdas 1 \
-  --exact-limit 22 \
-  --out results/results_exact.csv
+python scripts/run_ilp.py              # -> results/results_ilp.csv
 ```
 
-This yields 40 small adversarial instances whose affected regions are small
-enough for the exact branch-and-bound solver.
+### Exact solver at scale (RQ4)
+
+```bash
+python scripts/run_ilp_scalability.py  # -> results/results_ilp_scalability.csv
+```
+
+Graph generation for 50,000 and 100,000 nodes dominates the running time
+(several hours in total).
+
+### Action ablation
+
+```bash
+python scripts/run_ablation.py         # -> results/results_ablation.csv
+```
 
 ### Look-ahead depth experiment
 
@@ -141,8 +151,7 @@ python scripts/generate_paper_outputs.py --input-dir results --output-dir figure
 ```
 
 This produces the three figures, `table_families.tex`, and
-`summary_results.txt` (which also reports the RQ1 statistics when
-`results/results_exact.csv` is present).
+`summary_results.txt`.
 
 The plotting script uses embedded TrueType fonts in PDF output:
 
@@ -154,6 +163,10 @@ matplotlib.rcParams["ps.fonttype"] = 42
 
 ## Main expected results
 
+- Against proven optima, GreedyRepair is 110-141% more expensive on adversarial
+  instances; DA-k is within 1% on average whenever k >= trap depth.
+- Disabling recompute raises the optimal cost by 15% (Shared) and 156%
+  (Adversarial); disabling unlearn by 1% and 4%.
 - On depth-one adversarial instances, DA-1 reduces mean repair cost from
   126.06 to 65.59.
 - On depth-three traps, mean repair cost decreases from 151.24 (Greedy)
