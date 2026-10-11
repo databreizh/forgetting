@@ -30,6 +30,9 @@ python -m pip install -r requirements.txt
   exact-optimum, exact-solver scalability, and action-ablation campaigns.
 - `scripts/wfcommons_case_study.py`, `scripts/summarize_wfcommons.py`:
   case study on real WfCommons workflow traces.
+- `scripts/run_sensitivity.py`, `scripts/run_repair_ratio.py`, `scripts/run_rwp_gap.py`:
+  cost-regime experiments (RQ5): cost noise and repair-cost ratio, with the
+  recompute-whenever-possible (RWP) baseline.
 - `scripts/run_actor_ablation.py`:
   multi-actor cost ablation.
 - `scripts/generate_paper_outputs.py`:
@@ -100,6 +103,18 @@ costs are modeling assumptions documented at the top of the script.
 ```bash
 python scripts/run_actor_ablation.py   # -> results/results_actor_ablation.csv
 ```
+
+### Cost regime and cost errors (RQ5)
+
+```bash
+python scripts/run_repair_ratio.py    # results/results_repair_ratio.csv (~1 min)
+python scripts/run_sensitivity.py     # results/results_sensitivity.csv (~1 min)
+python scripts/run_rwp_gap.py         # results/results_rwp_gap.csv: RWP column of the RQ1 table
+```
+
+Mean gap to the optimum is `100*(algo/optimal-1)` per family and kappa
+(resp. sigma). Plans in `results_sensitivity.csv` are computed on perturbed
+costs and evaluated on the true costs.
 
 ### Look-ahead depth experiment
 
@@ -190,6 +205,13 @@ matplotlib.rcParams["ps.fonttype"] = 42
   1000Genome, Cycles, Epigenomics, and SRASearch; it costs a median of 4x, 6.2x,
   and 1136x the optimum for Montage, SoyKB, and Seismology, where GreedyRepair
   is 657% and 488% above the optimum on average (Montage, SoyKB).
+- On the 180 adversarial RQ1 instances, RWP is 12-13% above the optimum and
+  never optimal (Cascade: 214-226%).
+- Repair-cost ratio: RWP is 42.2% (Shared) and 45.9% (Adversarial) above the
+  optimum at kappa=4, Cascade 328.9% (Adversarial) at kappa=0.5; DA-1 stays
+  within 3% everywhere.
+- Cost noise sigma=0.25: exact plans are 5.0% (Shared) and 3.6% (Adversarial)
+  above the true optimum; at sigma=1, RWP (6.7%, 15.3%) beats them (12.1%, 35.6%).
 - Actor costs raise the retention of multi-owner artifacts from 21.6% to 34.4%.
 - Against proven optima, GreedyRepair is 110-141% more expensive on adversarial
   instances; DA-k is within 1% on average whenever k >= trap depth.
