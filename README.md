@@ -28,6 +28,10 @@ python -m pip install -r requirements.txt
   exact integer-programming formulation of MCCF (OR-Tools CP-SAT).
 - `scripts/run_ilp.py`, `scripts/run_ilp_scalability.py`, `scripts/run_ablation.py`:
   exact-optimum, exact-solver scalability, and action-ablation campaigns.
+- `scripts/wfcommons_case_study.py`, `scripts/summarize_wfcommons.py`:
+  case study on real WfCommons workflow traces.
+- `scripts/run_actor_ablation.py`:
+  multi-actor cost ablation.
 - `scripts/generate_paper_outputs.py`:
   generates figures and aggregate tables from experiment CSVs.
 - `results/`:
@@ -76,6 +80,25 @@ Graph generation for 50,000 and 100,000 nodes dominates the running time
 
 ```bash
 python scripts/run_ablation.py         # -> results/results_ablation.csv
+```
+
+### Case study on real workflow traces
+
+Uses the Pegasus execution traces of WfCommons (WfInstances repository):
+
+```bash
+git clone --depth 1 https://github.com/wfcommons/WfInstances
+python scripts/wfcommons_case_study.py --traces WfInstances/pegasus --out results/results_wfcommons.csv
+python scripts/summarize_wfcommons.py
+```
+
+Recomputation costs are the measured task runtimes. Recomputability and loss
+costs are modeling assumptions documented at the top of the script.
+
+### Multi-actor ablation
+
+```bash
+python scripts/run_actor_ablation.py   # -> results/results_actor_ablation.csv
 ```
 
 ### Look-ahead depth experiment
@@ -163,6 +186,11 @@ matplotlib.rcParams["ps.fonttype"] = 42
 
 ## Main expected results
 
+- Case study (135 WfCommons traces, rho=0.1): cascading deletion is optimal for
+  1000Genome, Cycles, Epigenomics, and SRASearch; it costs a median of 4x, 6.2x,
+  and 1136x the optimum for Montage, SoyKB, and Seismology, where GreedyRepair
+  is 657% and 488% above the optimum on average (Montage, SoyKB).
+- Actor costs raise the retention of multi-owner artifacts from 21.6% to 34.4%.
 - Against proven optima, GreedyRepair is 110-141% more expensive on adversarial
   instances; DA-k is within 1% on average whenever k >= trap depth.
 - Disabling recompute raises the optimal cost by 15% (Shared) and 156%
